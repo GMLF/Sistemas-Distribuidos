@@ -1,0 +1,4 @@
+br\resources\JakartaEE10Resource.class
+br\ejb\EJBConsumidor.class
+br\JakartaRestConfiguration.class
+br\jsf\JSFProdutor.class
