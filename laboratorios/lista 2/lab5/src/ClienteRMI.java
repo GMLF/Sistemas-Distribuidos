@@ -17,72 +17,70 @@ public class ClienteRMI {
     
 	public void iniciarCliente(){
 		
-		List<PeerLista> listaPeers = new ArrayList<PeerLista>();
-        for( PeerLista peer : PeerLista.values())
-        	listaPeers.add(peer);
+		List<PeerLista> listaPeers = new ArrayList<>();
+        for(PeerLista peer : PeerLista.values()) {
+            listaPeers.add(peer);
+        }
 		
         try {
-                        
             Registry registro = LocateRegistry.getRegistry("127.0.0.1", 1099);
 
-            
-        	//Escolhe um peer aleatorio da lista de peers para conectar
+            // Escolhe um peer aleatório para conectar
             SecureRandom sr = new SecureRandom();
-    		
             IMensagem stub = null;
             PeerLista peer = null;
-            
-    		boolean conectou=false;
-    		while(!conectou){
-    			peer = listaPeers.get(sr.nextInt(listaPeers.size()));
-    			try{    				
-    				stub = (IMensagem) registro.lookup(peer.getNome());
-    				conectou=true;
-    			} catch(java.rmi.ConnectException e){
-    				System.out.println("\n"+peer.getNome() + " indisponivel. ConnectException. Tentanto o proximo...");
-    			} catch(java.rmi.NotBoundException e){
-    				System.out.println("\n"+peer.getNome() + " indisponivel. NotBoundException. Tentanto o proximo...");
-    			}
-    		}
-            System.out.println("Conectado no peer: " + peer.getNome());            
-    		
+            boolean conectou = false;
 
-            String opcao="";
+            while(!conectou){
+                peer = listaPeers.get(sr.nextInt(listaPeers.size()));
+                try {    
+                    stub = (IMensagem) registro.lookup(peer.getNome());
+                    conectou = true;
+                } catch(java.rmi.ConnectException | java.rmi.NotBoundException e) {
+                    System.out.println(peer.getNome() + " indisponível. Tentando o próximo...");
+                }
+            }
+
+            System.out.println("Conectado ao peer: " + peer.getNome());            
+
             Scanner leitura = new Scanner(System.in);
+            String opcao = "";
             do {
-            	System.out.println("1) Read");
-            	System.out.println("2) Write");
-            	System.out.println("x) Exit");
-            	System.out.print(">> ");
-            	opcao = leitura.next();
-            	switch(opcao){
-            	case "1": {
-            		Mensagem mensagem = new Mensagem("", opcao);
-            		Mensagem resposta = stub.enviar(mensagem); //dentro da mensagem tem o campo 'read'
-            		System.out.println(resposta.getMensagem());
-            		break;
-            	}
-            	case "2": {
-            		//Monta a mensagem                		
-            		System.out.print("Add fortune: ");
-            		String fortune = leitura.next();
-            		
-            		Mensagem mensagem = new Mensagem(fortune, opcao);
-            		Mensagem resposta = stub.enviar(mensagem); //dentro da mensagem tem o campo 'write'
-            		System.out.println(resposta.getMensagem());
-            		break;
-            	}
-				case "x":
-					System.out.println("Encerrando Conexão");
-
-					try {
-						stub.desconectarPeer(peer.getNome());
-					} catch (RemoteException e) {
-						System.err.println("Erro ao tentar desconectar o peer.");
-						e.printStackTrace();
-					}
-					break;
-            	}
+                System.out.println("1) Read");
+                System.out.println("2) Write");
+                System.out.println("x) Exit");
+                System.out.print(">> ");
+                opcao = leitura.next();
+                
+                switch(opcao){
+                    case "1": {
+                        Mensagem mensagem = new Mensagem("", "read");
+                        Mensagem resposta = stub.enviar(mensagem);
+                        System.out.println(resposta.getMensagem());
+                        break;
+                    }
+                    case "2": {
+                        System.out.print("Add fortune: ");
+                        String fortune = leitura.next();
+                        Mensagem mensagem = new Mensagem(fortune, "write");
+                        Mensagem resposta = stub.enviar(mensagem);
+                        System.out.println(resposta.getMensagem());
+                        break;
+                    }
+                    case "x": {
+                        System.out.println("Encerrando conexão...");
+                        try {
+                            stub.desconectarPeer(peer.getNome());
+                        } catch (RemoteException e) {
+                            System.err.println("Erro ao desconectar o peer.");
+                            e.printStackTrace();
+                        }
+                        System.exit(0);
+                        break;
+                    }
+                    default:
+                        System.out.println("Opção inválida!");
+                }
             } while(!opcao.equals("x"));
             
         } catch(Exception e) {
@@ -92,9 +90,7 @@ public class ClienteRMI {
 	}
 
     public static void main(String[] args) {
-                
-    	new ClienteRMI().iniciarCliente();
-    	        
+        new ClienteRMI().iniciarCliente();
     }
     
 }
